@@ -1,9 +1,12 @@
 from flask import current_app
+from json import dumps
 from redis import Redis
 
-# Uses a connection pool behind the scenes, is threadsafe, yada yada
-redis = Redis(host=current_app.config['REDIS_HOST'], 
-              port=current_app.config['REDIS_PORT'])
+def create_redis(app, **kwargs):
+    global redis
+    redis = Redis(host=app.config['REDIS_HOST'], 
+                  port=app.config['REDIS_PORT'],
+                  **kwargs)
 
 class Model(object):
     @classmethod
@@ -15,18 +18,43 @@ class Model(object):
 
     @classmethod
     def get(cls, id):
-        model = cls(**attributes)
+        model = cls()
+        model.id = id
         model.load()
         return model
+
+    def dict(self):
+        return {}
+
+    def namespace(self):
+        return '%s:%d' % (self.__prefix__, self.id)
 
 class Task(Model):
     __prefix__ = 'tasks'
 
     def __init__(self, **attributes):
-        pass
+        self.name = attributes.get('name')
+        self.inputs = attributes.get('inputs')
 
     def load(self):
-        pass
+        namespace = self.namespace()
+        self.name = redis.hget(namespace, 'name')
+        self.inputs = redis.lrange('%s:requests-queue' % namespace, 0, -1) + \
+            redis.lrange('%s:results-queue' % namespace, 0, -1)
 
     def save(self):
-        pass
+        namespace = self.namespace()
+        redis.hset(namespace, 'name', self.name)
+        redis.rpush('%s:requests-queue' % namespace, *self.inputs)
+
+    def get_task_request(self):
+        return redis.lpop('%s:requests-queue' % self.namespace())
+
+    def add_task_result(self, result):
+        redis.rpush('%s:results-queue' % self.namespace(), result)
+
+    def get_task_result(self):
+        return redis.lpop('%s:results-queue' % self.namespace())
+
+    def dict(self):
+        return dict(id=self.id, name=self.name)
