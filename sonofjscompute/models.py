@@ -45,7 +45,17 @@ class Task(Model):
     def save(self):
         namespace = self.namespace()
         redis.hset(namespace, 'name', self.name)
-        redis.rpush('%s:requests-queue' % namespace, *self.inputs)
+        if len(self.inputs) > 0:
+            redis.rpush('%s:requests-queue' % namespace, *self.inputs)
+
+    def remaining_count(self):
+        return redis.llen('%s:requests-queue' % self.namespace())
+
+    def get_requests(self):
+        return redis.lrange('%s:requests-queue' % self.namespace(), 0, -1)
+
+    def get_results(self):
+        return redis.lrange('%s:results-queue' % self.namespace(), 0, -1)
 
     def get_task_request(self):
         return redis.lpop('%s:requests-queue' % self.namespace())
@@ -54,7 +64,8 @@ class Task(Model):
         redis.rpush('%s:results-queue' % self.namespace(), result)
 
     def get_task_result(self):
-        return redis.lpop('%s:results-queue' % self.namespace())
+        _, result = redis.blpop('%s:results-queue' % self.namespace())
+        return result
 
     def dict(self):
         return dict(id=self.id, name=self.name)
