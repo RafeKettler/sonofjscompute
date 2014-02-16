@@ -59,14 +59,19 @@ class Task(Model):
 
     def get_task_request(self):
         namespace = self.namespace()
-        redis.hincrby(namespace, 'processing', 1)
-        return redis.lpop('%s:requests-queue' % namespace)
+        transaction = redis.pipeline()
+        transaction.hincrby(namespace, 'processing', 1)
+        transaction.lpop('%s:requests-queue' % namespace)
+        _, request = transaction.execute()
+        return request
 
     def add_task_result(self, result):
         namespace = self.namespace()
-        print namespace
-        redis.hincrby(namespace, 'processing', -1)
-        redis.rpush('%s:results-queue' % namespace, result)
+        print result
+        transaction = redis.pipeline()
+        transaction.hincrby(namespace, 'processing', -1)
+        transaction.rpush('%s:results-queue' % namespace, result)
+        transaction.execute()
 
     def get_task_result(self):
         namespace = self.namespace()
@@ -75,11 +80,11 @@ class Task(Model):
 
     def is_processing(self):
         namespace = self.namespace()
-        processing = redis.hget(namespace, 'processing')
-        return processing and processing != 0
-
-    def has_requests(self):
-        return redis.llen('%s:requests-queue' % self.namespace()) > 0
+        transaction = redis.pipeline()
+        transaction.hget(namespace, 'processing')
+        transaction.llen('%s:requests-queue' % namespace)
+        processing, requests_len = transaction.execute()
+        return requests_len > 0 or (processing and processing != 0)
 
     def dict(self):
         return dict(id=self.id, name=self.name)
