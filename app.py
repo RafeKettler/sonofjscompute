@@ -5,7 +5,7 @@ from sonofjscompute.models import redis
 app = create_app()
 sockets = Sockets(app)
 
-@sockets.route('/echo/')
+@sockets.route('/create_task/')
 def echo_socket(ws):
     task_id = ws.receive()
     task = Task.get(task_id)
