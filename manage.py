@@ -22,7 +22,6 @@ def run_worker(task_id):
 
 @manager.command
 def aww():
-    models.redis.flushdb()
     t = Task.create(name='test', inputs=[
         'http://i.imgur.com/zOEilgl.jpg',
         'http://i.imgur.com/wDRinK6.jpg',

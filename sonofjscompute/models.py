@@ -23,6 +23,10 @@ class Model(object):
         model.load()
         return model
 
+    @classmethod
+    def get_last(cls):
+        return cls.get(int(redis.get('%s_id' % cls.__prefix__)))
+    
     def dict(self):
         return {}
 

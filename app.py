@@ -10,8 +10,8 @@ sockets = Sockets(app)
 
 @sockets.route('/mosaic/')
 def echo_socket(ws):
-    task_id = int(ws.receive())
-    task = Task.get(task_id)
+    ws.receive()
+    task = Task.get_last()
     while task.is_processing():
         result = task.get_task_result()
         ws.send(dumps({'url':result}))

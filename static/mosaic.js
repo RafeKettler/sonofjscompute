@@ -9,7 +9,7 @@
   d3.select("body").append("div");
 
   w.onopen = function(e) {
-    return w.send("1");
+    return w.send("start");
   };
 
   w.onmessage = function(e) {
@@ -21,6 +21,10 @@
       return d.url;
     }).style('border-style', 'dotted');
     return data.exit().remove();
+  };
+
+  window.onUnload = function(e) {
+    return w.close();
   };
 
 }).call(this);
