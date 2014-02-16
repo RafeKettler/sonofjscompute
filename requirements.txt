@@ -6,3 +6,4 @@ requests
 wtforms
 Flask-Sockets
 gunicorn
+pillow

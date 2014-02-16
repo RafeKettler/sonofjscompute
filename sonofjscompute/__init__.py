@@ -10,7 +10,7 @@ def create_app():
     app = Flask(__name__, static_folder=static_path)
     app.config.from_object('sonofjscompute.config')
 
-    create_redis(app)
+    create_redis(app, db=2)
     sockets = Sockets(app)
 
     app.register_blueprint(tasks, url_prefix='/tasks')

@@ -71,7 +71,6 @@ class Task(Model):
 
     def add_task_result(self, result):
         namespace = self.namespace()
-        print result
         transaction = redis.pipeline()
         transaction.hincrby(namespace, 'processing', -1)
         transaction.rpush('%s:results-queue' % namespace, result)
