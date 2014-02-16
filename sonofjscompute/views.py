@@ -6,6 +6,8 @@ from json import loads
 import requests
 import wtforms as wtf
 
+from flask_sockets import Sockets
+
 from sonofjscompute.models import Task
 
 def created(model):

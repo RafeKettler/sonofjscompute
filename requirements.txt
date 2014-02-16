@@ -4,3 +4,5 @@ pytest
 redis
 requests
 wtforms
+Flask-Sockets
+gunicorn

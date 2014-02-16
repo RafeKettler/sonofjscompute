@@ -4,7 +4,7 @@ from redis import Redis
 
 def create_redis(app, **kwargs):
     global redis
-    redis = Redis(host=app.config['REDIS_HOST'], 
+    redis = Redis(host=app.config['REDIS_HOST'],
                   port=app.config['REDIS_PORT'],
                   **kwargs)
 
@@ -48,13 +48,27 @@ class Task(Model):
         redis.rpush('%s:requests-queue' % namespace, *self.inputs)
 
     def get_task_request(self):
-        return redis.lpop('%s:requests-queue' % self.namespace())
+        namespace = self.namespace()
+        redis.hincrby(namespace, 'processing', 1)
+        return redis.lpop('%s:requests-queue' % namespace)
 
     def add_task_result(self, result):
-        redis.rpush('%s:results-queue' % self.namespace(), result)
+        namespace = self.namespace()
+        print namespace
+        redis.hincrby(namespace, 'processing', -1)
+        redis.rpush('%s:results-queue' % namespace, result)
 
     def get_task_result(self):
-        return redis.lpop('%s:results-queue' % self.namespace())
+        namespace = self.namespace()
+        return redis.lpop('%s:results-queue' % namespace)
+
+    def is_processing(self):
+        namespace = self.namespace()
+        processing = redis.hget(namespace, 'processing')
+        return processing and processing != 0
+
+    def has_requests(self):
+        return redis.llen('%s:requests-queue' % self.namespace()) > 0
 
     def dict(self):
         return dict(id=self.id, name=self.name)
