@@ -3,6 +3,7 @@ import json
 import multiprocessing
 import os
 from PIL import Image
+from random import shuffle
 import requests
 from StringIO import StringIO
 
@@ -39,7 +40,7 @@ def aww():
     pool = multiprocessing.Pool(processes)
     pool.map(_work, [t] * processes)
 
-RESOLUTION = 60
+RESOLUTION = 30
     
 @manager.command
 def start_mosaic(url='http://25.media.tumblr.com/tumblr_mb50xf8S9c1rgw39go1_500.jpg'):
@@ -65,6 +66,7 @@ def start_mosaic(url='http://25.media.tumblr.com/tumblr_mb50xf8S9c1rgw39go1_500.
             inputs.append(json.dumps({'x':x, 'y':y, 'r':r, 'g':g, 'b':b}))
 
     models.create_redis(app, db=2)
+    shuffle(inputs)
     task = Task.create(name='mosaic', inputs=inputs)
     processes = multiprocessing.cpu_count() or 1
     pool = multiprocessing.Pool(processes)
