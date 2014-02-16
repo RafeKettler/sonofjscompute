@@ -1,6 +1,8 @@
 from json import dumps
 from json import loads
 
+from sonofjscompute.models import Task
+
 from test import TestCase
 
 class TestTasks(TestCase):
@@ -15,3 +17,7 @@ class TestTasks(TestCase):
         json = loads(resp.data)
         self.assertTrue(json['id'])
         self.assertEquals('foo', json['name'])
+        inputs = Task.get(json['id']).get_requests()
+        self.assertEquals(2, len(inputs))
+        self.assertEquals('foo', inputs[0])
+        self.assertEquals('bar', inputs[1])
